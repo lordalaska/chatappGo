@@ -1,0 +1,41 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main  # Триггер на пуш в ветку main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js (если твое приложение использует Node.js)
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'  # Укажи нужную версию
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test  # Укажи команду для тестирования
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.SERVER_IP }}  # IP сервера из секретов GitHub
+          username: ${{ secrets.SSH_USER }}  # Имя пользователя для SSH
+          key: ${{ secrets.SSH_PRIVATE_KEY }}  # Приватный ключ SSH из секретов
+          script: |
+            cd /path/to/deploy/folder
+            git pull origin main
+            npm install
+            npm run build
+            pm2 restart all  # Перезапуск приложения через pm2
