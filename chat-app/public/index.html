@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat Application</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto:wght@300;400;700&display=swap">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #16001d;
+            color: #8400ff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #chat {
+            width: 500px;
+            background: #000;
+            border: 2px solid #ae00ff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 20px #ae00ff;
+        }
+        h2 {
+            font-family: 'Press Start 2P', cursive;
+            color: #ae00ff;
+            text-align: center;
+        }
+        #messages {
+            border: 1px solid #ae00ff;
+            height: 300px;
+            overflow-y: scroll;
+            padding: 10px;
+            background: #0e001f;
+            box-shadow: inset 0 0 10px #ae00ff;
+            border-radius: 5px;
+        }
+        #messageForm {
+            display: flex;
+            margin-top: 10px;
+        }
+        #usernameInput, #messageInput {
+            flex: 1;
+            padding: 10px;
+            background: #0e001f;
+            border: 1px solid #ae00ff;
+            color: #ae00ff;
+            border-radius: 5px;
+            margin-right: 10px;
+            box-shadow: 0 0 5px #ae00ff;
+        }
+        #sendButton {
+            padding: 10px;
+            background: #7f00b9;
+            border: none;
+            color: #41005f;
+            cursor: pointer;
+            border-radius: 5px;
+            box-shadow: 0 0 10px #ae00ff;
+            transition: background 0.3s;
+        }
+        #sendButton:hover {
+            background: #ae00ff;
+        }
+        ::placeholder {
+            color: #ae00ff;
+        }
+        .message {
+            opacity: 0;
+            animation: fadeIn 1s forwards;
+        }
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="chat">
+        <h2>Chat Application</h2>
+        <div id="messages"></div>
+        <form id="messageForm">
+            <input type="text" id="usernameInput" placeholder="Username" required>
+            <input type="text" id="messageInput" placeholder="Message" required>
+            <button type="submit" id="sendButton">Send</button>
+        </form>
+    </div>
+
+    <script>
+        const ws = new WebSocket('ws://localhost:8000/ws');
+        const bannedWords = ["fuck", "shit", "dick"]; // Добавьте сюда запрещенные слова
+
+        ws.onopen = function() {
+            console.log('Connected to the WebSocket server');
+        };
+
+        ws.onmessage = function(event) {
+            const message = JSON.parse(event.data);
+            const messages = document.getElementById('messages');
+            const messageElement = document.createElement('div');
+            messageElement.textContent = `${message.username}: ${message.message}`;
+            messageElement.classList.add('message');
+            messages.appendChild(messageElement);
+            messages.scrollTop = messages.scrollHeight;
+        };
+
+        ws.onerror = function(error) {
+            console.error('WebSocket error: ', error);
+        };
+
+        document.getElementById('messageForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const usernameInput = document.getElementById('usernameInput');
+            const messageInput = document.getElementById('messageInput');
+            const message = {
+                username: usernameInput.value,
+                message: messageInput.value
+            };
+
+            if (containsBannedWords(message.message)) {
+                alert("Your message contains banned words and will not be sent.");
+                return;
+            }
+
+            console.log('Sending message: ', message);
+            ws.send(JSON.stringify(message));
+            messageInput.value = '';
+        });
+
+        function containsBannedWords(message) {
+            for (const word of bannedWords) {
+                if (message.toLowerCase().includes(word)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    </script>
+</body>
+</html>
