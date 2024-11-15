@@ -1,0 +1,42 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main  # Триггер при пуше в main ветку
+  pull_request:
+    branches:
+      - main  # Триггер при pull request в main ветку
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2  # Проверка кода из репозитория
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'  # Версия Node.js, если это нужно для твоего приложения
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build application
+        run: npm run build
+
+      - name: Run tests
+        run: npm test
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build  # Зависимость от этапа сборки
+
+    steps:
+      - name: Deploy to server
+        run: |
+          # Вставь команды для деплоя, например, через SSH
+          # или использование сервиса для деплоя в облако
+          echo "Deploying application..."  # Для теста можно оставить как есть
